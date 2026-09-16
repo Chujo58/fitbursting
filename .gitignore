@@ -1,2 +1,7 @@
 baseband-analysis/
 DM_phase/
+*.json
+!fitburst/parser_configs/*.json
+*.png
+__pycache__
+npz/

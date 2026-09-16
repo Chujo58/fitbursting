@@ -1,0 +1,214 @@
+{
+    "description": "A Python3 script that uses fitburst API to read, preprocess, and fit 'generic'-formatted data against a model of the dynamic spectrum. NOTE: by default, the scattering timescale is not a fit parameter but can be turned into one through use of the --fit option.",
+    "arguments": [
+        {
+            "name": "file",
+            "type": "str",
+            "help": "A Numpy state file containing data and metadata in fitburst-compliant ('generic') format."
+        },
+        {
+            "name": "--amplitude",
+            "dest": "amplitude",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for log (base 10) of the overall amplitude."
+        },
+        {
+            "name": "--arrival_time",
+            "dest": "arrival_time",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for arrival time, in units of seconds."
+        },
+        {
+            "name": "--dm",
+            "dest": "dm",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for DM, in units of pc/cc."
+        },
+        {
+            "name": "--dm_index",
+            "dest": "dm_index",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for index DM time delay, in units of dex."
+        },
+        {
+            "name": "--downsample_freq",
+            "dest": "factor_freq_downsample",
+            "default": 1,
+            "type": "int",
+            "help": "Downsample the raw spectrum along the frequency axis by a specified integer."
+        },
+        {
+            "name": "--downsample_time",
+            "dest": "factor_time_downsample",
+            "default": 1,
+            "type": "int",
+            "help": "Downsample the raw spectrum along the time axis by a specified integer."
+        },
+        {
+            "name": "--fit",
+            "dest": "parameters_to_fit",
+            "default": [],
+            "nargs": "+",
+            "type": "str",
+            "help": "A list of assumed-fixed model parameters to fit during least-squares estimation."
+        },
+        {
+            "name": "--fix",
+            "dest": "parameters_to_fix",
+            "default": [],
+            "nargs": "+",
+            "type": "str",
+            "help": "A list of model parameters to hold fixed to initial values."
+        },
+        {
+            "name": "--folded",
+            "dest": "is_folded",
+            "action": "store_true",
+            "default": false,
+            "help": "If set, then fit spectrum of a folded profile (e.g., for a pulsar observation)."
+        },
+        {
+            "name": "--iterations",
+            "dest": "num_iterations",
+            "default": 1,
+            "type": "int",
+            "help": "Integer number of fit iterations."
+        },
+        {
+            "name": "--outfile",
+            "dest": "use_outfile_substring",
+            "action": "store_true",
+            "default": false,
+            "help": "If set, then use substring to uniquely label output filenamese based on input filenames."
+        },
+        {
+            "name": "--peakfind_dist",
+            "dest": "peakfind_dist",
+            "default": 5,
+            "type": "int",
+            "help": "Separation used for peak-finding algorithm (for multi-component fitting)."
+        },
+        {
+            "name": "--peakfind_rms",
+            "dest": "peakfind_rms",
+            "default": null,
+            "type": "float",
+            "help": "RMS used for peak-finding algorithm (for multi-component fitting)."
+        },
+        {
+            "name": "--preprocess",
+            "dest": "preprocess_data",
+            "action": "store_true",
+            "help": "If set, the run preprocessing return to normalize data and mask bad frequencies."
+        },
+        {
+            "name": "--ref_freq",
+            "default": null,
+            "type": "float",
+            "help": "If set, then replace reference frequency with command-line value."
+        },
+        {
+            "name": "--remove_smearing",
+            "dest": "remove_dispersion_smearing",
+            "action": "store_true",
+            "help": "If set, then allow for removal of dispersion smearing."
+        },
+        {
+            "name": "--scattering_timescale",
+            "dest": "scattering_timescale",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for scattering timescale, in units of seconds."
+        },
+        {
+            "name": "--scintillation",
+            "action": "store_true",
+            "dest": "scintillation",
+            "help": "If set, then allow amplitude-independent modelling to account for scintillation."
+        },
+        {
+            "name": "--spectral_index",
+            "dest": "spectral_index",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for power-law spectral index."
+        },
+        {
+            "name": "--spectral_running",
+            "dest": "spectral_running",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for power-law spectral 'running'."
+        },
+        {
+            "name": "--solution",
+            "dest": "solution_file",
+            "default": null,
+            "type": "str",
+            "help": "If set, use existing solution in fitburst-compliant JSON format."
+        },
+        {
+            "name": "--upsample_freq",
+            "dest": "factor_freq_upsample",
+            "default": 1,
+            "type": "int",
+            "help": "Upsample the raw spectrum along the frequency axis by a specified integer."
+        },
+        {
+            "name": "--upsample_time",
+            "dest": "factor_time_upsample",
+            "default": 1,
+            "type": "int",
+            "help": "Upsample the raw spectrum along the time axis by a specified integer."
+        },
+        {
+            "name": "--variance_range",
+            "dest": "variance_range",
+            "default": [0.2, 0.8],
+            "nargs": 2,
+            "type": "float",
+            "help": "Bounds of per-channel variance used to designate 'bad' channels in preprocessing step."
+        },
+        {
+            "name": "--verbose",
+            "action": "store_true",
+            "dest": "verbose",
+            "default": false,
+            "help": "If set, then print additional information related to fit parameters and fitting."
+        },
+        {
+            "name": "--weight_range",
+            "dest": "weight_range",
+            "default": null,
+            "nargs": 2,
+            "type": "int",
+            "help": "Indeces for timestamp array that represent region to evaluate RMS data weights."
+        },
+        {
+            "name": "--width",
+            "dest": "width",
+            "default": null,
+            "nargs": "+",
+            "type": "float",
+            "help": "Initial guess for burst width, in seconds."
+        },
+        {
+            "name": "--window",
+            "dest": "window",
+            "default": null,
+            "type": "float",
+            "help": "Half of size of data window, in seconds."
+        }
+    ]
+}
