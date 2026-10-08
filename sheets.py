@@ -44,9 +44,10 @@ credentials = Credentials.from_service_account_file(
 )  # authentication
 service = build("sheets", "v4", credentials=credentials)
 
-spreadsheet_id = (
-    "1IbxciCSm2gIkBLxVR1_jQz5efxdJFQ7WdLYaXz-6iyw"  # This is for magnetron2
-)
+spreadsheet_id = "1fOblgo1gBbGMheB2oM29b1RN84M3AFh3FiIpJxAfAMc"
+# spreadsheet_id = (
+#     "1IbxciCSm2gIkBLxVR1_jQz5efxdJFQ7WdLYaXz-6iyw"  # This is for magnetron2
+# )
 # default tab name; functions accept an optional `sheet_tab` parameter
 sheet_tab = "Sheet1"
 spreadsheet_range = f"{sheet_tab}!A:Z"
