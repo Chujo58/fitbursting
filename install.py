@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 import subprocess
 import os
+import argparse
 
 WINDOWS = sys.platform == "win32"
 DONE = lambda: print("DONE!")
@@ -16,6 +17,14 @@ print()
 print("All installed files will be inside the")
 print("current folder.")
 print()
+
+parser = argparse.ArgumentParser(description="Install script for fitbursting")
+parser.add_argument(
+        "--ssh",
+        action="store_true",
+        help="git clone via ssh instead of https"
+        )
+args = parser.parse_args()
 
 user_input = input("Continue with current installation? (Y/n) ").lower().strip("\r\n")
 while user_input not in ["y", "n"]:
@@ -64,8 +73,12 @@ DONE()
 
 # 3. Install the GitHub dependencies
 print("Step 3: Install the GitHub dependencies")
-subprocess.run(["git", "clone", "https://github.com/CHIMEFRB/baseband-analysis"])
-subprocess.run(["git", "clone", "https://github.com/danielemichilli/DM_phase"])
+if args.ssh:
+    subprocess.run(["git", "clone", "git@github.com:CHIMEFRB/baseband-analysis"])
+    subprocess.run(["git", "clone", "git@github.com:danielemichilli/DM_phase"])
+else:
+    subprocess.run(["git", "clone", "https://github.com/CHIMEFRB/baseband-analysis"])
+    subprocess.run(["git", "clone", "https://github.com/danielemichilli/DM_phase"])
 subprocess.run(["git", "checkout", "0ec3f4c3"], cwd="baseband-analysis")
 DONE()
 
