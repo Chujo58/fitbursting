@@ -27,3 +27,4 @@ ipywidgets
 zarr<3
 pyperclip
 uncertainties
+setuptools
