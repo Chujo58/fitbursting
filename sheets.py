@@ -584,6 +584,105 @@ def update_row(
     )
 
 
+def update_row_by_identifier(
+    identifier: dict[str, str],
+    row_values: dict,
+    sheet_tab: str | None = None,
+    spreadsheet_id: str | None = None,
+) -> None:
+    """Update specific cells in the row matching the given identifier.
+
+    The identifier maps column names to values. All identifier
+    fields must match the same row. Only columns specified in
+    row_values are modified.
+    """
+    if not row_values:
+        return
+
+    if not identifier:
+        raise ValueError("Identifier cannot be empty.")
+
+    tab, sid = _resolve_sheet_target(sheet_tab, spreadsheet_id)
+
+    column_keys, _ = get_column_keys(
+        sheet_tab=tab,
+        spreadsheet_id=sid,
+    )
+    column_index_map = {key: index for index, key in enumerate(column_keys)}
+
+    # Validate identifier columns
+    for key in identifier:
+        if key not in column_index_map:
+            raise ValueError(f"Identifier column {key!r} does not exist in the sheet.")
+
+    row_map = get_event_row_map(
+        sheet_tab=tab,
+        spreadsheet_id=sid,
+    )
+
+    # Fetch sheet data to identify the matching row.
+    result = _execute_with_backoff(
+        service.spreadsheets()
+        .values()
+        .get(
+            spreadsheetId=sid,
+            range=f"'{tab}'!A:ZZ",
+        )
+    )
+
+    rows = result.get("values", [])
+    if not rows:
+        raise ValueError("The spreadsheet is empty.")
+
+    headers = rows[0]
+    matches = []
+
+    for row_number, row in enumerate(rows[1:], start=2):
+        if all(
+            str(row[column_index_map[key]]) == str(value)
+            for key, value in identifier.items()
+            if column_index_map[key] < len(row)
+        ) and all(column_index_map[key] < len(row) for key in identifier):
+            matches.append(row_number)
+
+    if not matches:
+        raise ValueError(f"No row found matching identifier {identifier!r}.")
+
+    if len(matches) > 1:
+        raise ValueError(f"Identifier {identifier!r} matched multiple rows: {matches}.")
+
+    row_index = matches[0]
+
+    data = []
+    for key, value in row_values.items():
+        col_index = column_index_map.get(key)
+        if col_index is None:
+            continue
+
+        col_letter = _column_letter(col_index)
+        data.append(
+            {
+                "range": f"'{tab}'!{col_letter}{row_index}",
+                "values": [[value]],
+            }
+        )
+
+    if not data:
+        return
+
+    _execute_with_backoff(
+        service.spreadsheets()
+        .values()
+        .batchUpdate(
+            spreadsheetId=sid,
+            body={
+                "valueInputOption": "USER_ENTERED",
+                "data": data,
+            },
+        )
+    )
+
+
 def batch_rows(
     eids: list, sheet_tab: str | None = None, spreadsheet_id: str | None = None
 ) -> None:
@@ -673,6 +772,92 @@ def batch_rows(
                 body={"valueInputOption": "USER_ENTERED", "data": data},
             )
         )
+
+
+def get_info_by_identifier(
+    identifier: dict[str, str],
+    sheet_tab: str | None = None,
+    spreadsheet_id: str | None = None,
+) -> dict:
+    """Retrieve all column data for a row matching the given identifier.
+
+    The identifier maps column names to values. All identifier fields
+    must match the same row.
+
+    Parameters
+    ----------
+    identifier : dict
+        Dictionary mapping column headers to values used to identify
+        the row. All specified fields must match.
+    sheet_tab : str, optional
+        The name of the sheet tab to read from. If None, uses the
+        module-level default sheet_tab variable.
+    spreadsheet_id : str, optional
+        The Google Sheets spreadsheet ID. If None, uses the
+        module-level default spreadsheet_id variable.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping column headers to their corresponding
+        cell values. Empty cells are represented as empty strings.
+
+    Raises
+    ------
+    ValueError
+        If identifier is empty or matches multiple rows.
+    KeyError
+        If an identifier column does not exist or no matching row
+        is found.
+
+    Examples
+    --------
+    >>> info = get_info_by_identifier({'Hostname': 'server-01'})
+    >>> print(info['Status'])
+
+    >>> info = get_info_by_identifier({
+    ...     'Hostname': 'server-01',
+    ...     'Environment': 'Production',
+    ... })
+    """
+    if not identifier:
+        raise ValueError("Identifier cannot be empty.")
+
+    spreadsheet_data = get_spreadsheet(
+        sheet_tab=sheet_tab,
+        spreadsheet_id=spreadsheet_id,
+    )
+
+    keys = spreadsheet_data[1][0]
+    rows = spreadsheet_data[1][1:]
+
+    column_index_map = {key: index for index, key in enumerate(keys)}
+
+    # Validate identifier columns
+    for key in identifier:
+        if key not in column_index_map:
+            raise KeyError(f"Identifier column {key!r} does not exist in the sheet.")
+
+    matches = []
+
+    for row in rows:
+        # Pad missing trailing cells
+        current_info = list(row)
+        current_info.extend([""] * (len(keys) - len(current_info)))
+
+        if all(
+            str(current_info[column_index_map[key]]) == str(value)
+            for key, value in identifier.items()
+        ):
+            matches.append(current_info)
+
+    if not matches:
+        raise KeyError(f"Cannot find a row matching identifier: {identifier}")
+
+    if len(matches) > 1:
+        raise ValueError(f"Multiple rows match identifier: {identifier}")
+
+    return {key: matches[0][i] for i, key in enumerate(keys)}
 
 
 def get_info(
