@@ -7,7 +7,7 @@ scattering+scintillation. Outputs are moved into per-mode subdirectories under
 
 import argparse
 import getpass
-import glob  # noqa: E401
+import glob
 import os
 import shutil
 import subprocess
@@ -20,12 +20,10 @@ from paths import NPZ_SAVE_PATH, RESULTS_PATH, TEMPORARY_NPZ_PATH
 from sheets import (
     append_row,
     get_info,
-    update_row,
     get_info_by_identifier,
+    update_row,
     update_row_by_identifier,
 )
-
-from images import shrink_and_upload
 
 user = getpass.getuser()
 
@@ -404,38 +402,5 @@ else:
                 "Components": comp_count,
             },
             sheet_tab="History",
-            spreadsheet_id="1fOblgo1gBbGMheB2oM29b1RN84M3AFh3FiIpJxAfAMc",
-        )
-
-    # Upload images and update images tab.
-    link = shrink_and_upload(
-        f"output/results_{eid}/{fit_type}/summary_plot_{eid}.png",
-        f"{eid}_{fit_type}_{user}.jpg",
-    )
-
-    try:
-        identifer = {"Event ID": eid, "Run by": user}
-        get_info_by_identifier(
-            identifier, "History", "1fOblgo1gBbGMheB2oM29b1RN84M3AFh3FiIpJxAfAMc"
-        )
-        update_row_by_identifier(
-            identifer,
-            {
-                f"{fit_type} plot": f"{link}",
-                "Updated": str(datetime.now(UTC)).split(".")[0],
-            },
-            sheet_tab="Images",
-            spreadsheet_id="1fOblgo1gBbGMheB2oM29b1RN84M3AFh3FiIpJxAfAMc",
-        )
-
-    except Exception as e:
-        append_row(
-            {
-                "Event ID": eid,
-                f"{fit_type} plot": f"{link}",
-                "Updated": str(datetime.now(UTC)).split(".")[0],
-                "Run by": user,
-            },
-            sheet_tab="Images",
             spreadsheet_id="1fOblgo1gBbGMheB2oM29b1RN84M3AFh3FiIpJxAfAMc",
         )
